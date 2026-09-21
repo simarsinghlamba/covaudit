@@ -15,6 +15,28 @@ US Census ACSIncome data (via folktables).
 
 **Status:** under development. Results will be added as experiments are run.
 
+## Methods
+
+**Split conformal prediction.** A model is trained on one part of the data. Its
+nonconformity scores (1 minus the probability of the true label) are computed on a
+separate calibration part, and one threshold is taken as the ceil((n + 1)(1 - alpha))-th
+smallest score. Every label whose score is at or below the threshold goes into the
+prediction set. This guarantees at least 1 - alpha coverage *on average over everyone*,
+but says nothing about any particular group.
+
+**Mondrian conformal prediction.** The same model and scores, but the calibration scores
+are split by group and each group gets its own threshold from its own data, using the
+same (n + 1) rule. Because calibration and test people within one group are still
+exchangeable, each group gets its own 1 - alpha guarantee, on average over calibration
+draws. Groups with 8 or fewer calibration people (alpha = 0.1) get an infinite
+threshold, so every label is kept, and small groups' coverage varies noticeably from
+run to run.
+
+**Requirement.** Mondrian needs each person's group **at prediction time** to pick their
+threshold. For attributes such as race this raises legal and ethical questions; covaudit
+uses them to audit and demonstrate the effect, and in a real deployment the grouping
+should be chosen with domain and legal input.
+
 ## Run with Docker
 
 Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running).
