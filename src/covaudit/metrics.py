@@ -29,3 +29,15 @@ def clopper_pearson(k, n, confidence=0.95):
     ci = binomtest(int(k), int(n)).proportion_ci(confidence_level=confidence,
                                                  method="exact")
     return (float(ci.low), float(ci.high))
+
+
+def coverage_status(cov, ci_high, alpha):
+    """FAIL if even the interval's upper end is below 1 - alpha;
+    LOW if coverage is below 1 - alpha but chance could explain it; else OK.
+    """
+    target = 1 - alpha
+    if ci_high < target:
+        return "FAIL"
+    if cov < target:
+        return "LOW"
+    return "OK"
