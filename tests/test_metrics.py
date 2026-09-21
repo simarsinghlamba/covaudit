@@ -1,6 +1,15 @@
 import numpy as np
+from hypothesis import given
+from hypothesis import strategies as st
 
 from covaudit.metrics import clopper_pearson, coverage_status, group_coverage_table
+
+
+@given(n=st.integers(min_value=1, max_value=2000), frac=st.floats(0, 1))
+def test_interval_is_valid_and_contains_estimate(n, frac):
+    k = round(frac * n)
+    low, high = clopper_pearson(k, n)
+    assert 0.0 <= low <= k / n <= high <= 1.0
 
 
 def test_smaller_groups_get_wider_intervals():
