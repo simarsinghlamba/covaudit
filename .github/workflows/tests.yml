@@ -1,0 +1,29 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package with test tools
+        run: pip install -e ".[dev]"
+      - name: Check code style
+        run: ruff check .
+      - name: Run tests
+        run: pytest -q
+
+  docker-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t covaudit:ci .
+      - name: Run tests inside the container
+        run: docker run --rm covaudit:ci pytest -q
