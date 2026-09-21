@@ -1,6 +1,7 @@
 # covaudit
 
 ![tests](https://github.com/simarsinghlamba/covaudit/actions/workflows/tests.yml/badge.svg)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/simarsinghlamba/covaudit/blob/main/notebooks/demo.ipynb)
 
 Audit and repair subgroup coverage of conformal prediction.
 
