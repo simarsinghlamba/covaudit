@@ -1,5 +1,7 @@
 # covaudit
 
+![tests](https://github.com/simarsinghlamba/covaudit/actions/workflows/tests.yml/badge.svg)
+
 Audit and repair subgroup coverage of conformal prediction.
 
 Conformal prediction wraps any classifier and promises that the true label lands inside its
