@@ -2,3 +2,6 @@
 * text=auto eol=lf
 *.png binary
 *.ipynb text eol=lf
+
+# GitHub language statistics: the demo notebook is documentation, not source code.
+notebooks/*.ipynb linguist-documentation
