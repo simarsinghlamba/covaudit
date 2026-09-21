@@ -7,6 +7,14 @@ services:
       - ./data:/app/data
       - ./outputs:/app/outputs
 
+  shift:
+    build: .
+    image: covaudit:local
+    command: covaudit shift --config configs/shift.yaml --out outputs/shift
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+
   report:
     build: .
     image: covaudit:local
@@ -15,6 +23,8 @@ services:
       - ./outputs:/app/outputs
     depends_on:
       audit:
+        condition: service_completed_successfully
+      shift:
         condition: service_completed_successfully
 
   tests:

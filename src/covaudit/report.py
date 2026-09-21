@@ -116,6 +116,24 @@ def write_report(results_dir, out_dir, alpha=0.1):
         lines += ["Per-group means over seeds:", "",
                   _md_any(_repair_wide(pd.read_csv(csv))), ""]
 
+    shifts = sorted(p for p in results_dir.rglob("shift_coverage.csv")
+                    if out_dir not in p.parents)
+    if shifts:
+        lines += ["## Distribution shift: thresholds from one state used in others", ""]
+    for csv in shifts:
+        from covaudit.experiment import summarise_shift
+
+        folder = csv.parent.name if csv.parent != results_dir else "shift"
+        s = pd.read_csv(csv)
+        fig = plot_shift(csv, alpha, out_dir / f"{folder}.png",
+                         title=f"Coverage under distribution shift ({folder})")
+        wide = s.pivot_table(index=["group", "name"], columns=["target", "method"],
+                             values="coverage", sort=False)
+        wide.columns = [f"{t} {m}" for t, m in wide.columns]
+        lines += [f"### `{csv.relative_to(results_dir)}`", "", f"![shift]({fig.name})", "",
+                  "Per target and method:", "", _md_any(summarise_shift(s, alpha)), "",
+                  "Coverage per group:", "", _md_any(wide.reset_index()), ""]
+
     for fname, label in [("group_coverage.csv", "repair experiment"),
                          ("shift_coverage.csv", "shift experiment")]:
         if not any(results_dir.rglob(fname)):
@@ -227,3 +245,42 @@ def _repair_wide(g):
         wide[f"coverage {method}"] = sub["cov_mean"]
         wide[f"set size {method}"] = sub["size_mean"]
     return wide
+
+
+def _shift_points(s, min_n=30):
+    """Per target and method: overall coverage and worst coverage among groups with n >= min_n."""
+    out = []
+    for (target, method), t in s.groupby(["target", "method"], sort=False):
+        everyone = t[t["group"] == "ALL"].iloc[0]
+        groups = t[(t["group"] != "ALL") & (t["n"] >= min_n)]
+        label = f"{target} (no shift)" if not bool(everyone["shifted"]) else str(target)
+        out.append({"target": label, "method": method, "overall": everyone["coverage"],
+                    "worst": groups["coverage"].min() if len(groups) else float("nan")})
+    return pd.DataFrame(out)
+
+
+def plot_shift(shift_csv, alpha, path, title=None, min_n=30):
+    """Overall (circles, solid) and worst-group (triangles, dashed) coverage per target."""
+    p = _shift_points(pd.read_csv(shift_csv), min_n)
+    targets = list(dict.fromkeys(p["target"]))
+    x = {t: i for i, t in enumerate(targets)}
+    palette = {"split": "#8a8f98", "mondrian": "#2a7f8e"}
+    fig, ax = plt.subplots(figsize=(7.5, 4.2))
+    for method, m in p.groupby("method", sort=False):
+        color = palette.get(method, "#1f3a5f")
+        xs = [x[t] for t in m["target"]]
+        ax.plot(xs, m["overall"], "o-", color=color, label=f"{method}: everyone")
+        ax.plot(xs, m["worst"], "^--", color=color, label=f"{method}: worst group (n >= {min_n})")
+    ax.axhline(1 - alpha, ls=":", color="black", lw=1)
+    ax.set_xticks(range(len(targets)))
+    ax.set_xticklabels(targets)
+    ax.set_ylabel("coverage")
+    ax.set_xlabel("thresholds calibrated on the source state, applied to each target")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False, fontsize=9)
+    ax.set_title(title or "Coverage under distribution shift")
+    fig.tight_layout()
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return path
