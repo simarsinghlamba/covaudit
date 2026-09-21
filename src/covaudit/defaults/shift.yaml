@@ -1,0 +1,11 @@
+# configs/shift.yaml
+source:
+  state: CA
+  year: "2018"
+targets: [TX, NY, FL]
+root: data
+group_column: RAC1P
+alpha: 0.1
+confidence: 0.95
+seed: 0
+methods: [split, mondrian]
