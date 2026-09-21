@@ -1,0 +1,24 @@
+services:
+  audit:
+    build: .
+    image: covaudit:local
+    command: covaudit run --config configs/repair.yaml --out outputs/repair
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+
+  report:
+    build: .
+    image: covaudit:local
+    command: covaudit report --results outputs --out outputs/report
+    volumes:
+      - ./outputs:/app/outputs
+    depends_on:
+      audit:
+        condition: service_completed_successfully
+
+  tests:
+    build: .
+    image: covaudit:local
+    command: pytest -q
+    profiles: ["test"]
