@@ -66,3 +66,13 @@ def group_coverage_table(y, sets, groups, classes, alpha=0.1, confidence=0.95):
             "status": coverage_status(cov, high, alpha) if n else "EMPTY",
         })
     return pd.DataFrame(rows)
+
+
+def worst_group_gap(table, alpha=0.1):
+    """How far the lowest-covered group falls below 1 - alpha (0 if none).
+
+    Ignores the ALL row and empty groups. Uses raw coverage, not intervals,
+    so it is sensitive to very small groups: read it next to the status column.
+    """
+    groups = table[(table["group"] != "ALL") & (table["n"] > 0)]
+    return float(max(0.0, (1 - alpha) - groups["coverage"].min()))
