@@ -5,6 +5,28 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-21
+
+### Added
+- Distribution-shift experiment (`covaudit shift`, `configs/shift.yaml`): calibrate on
+  California, apply the same thresholds to Texas, New York and Florida.
+- Shift figure and shift section in the report; committed results in `results/shift`.
+- Compose: `shift` service; `report` waits for both `audit` and `shift`.
+- Demo notebook (`notebooks/demo.ipynb`), generated and executed end to end from a clean
+  install; Open in Colab badge in README.
+- Compose `notebook` profile: JupyterLab on 127.0.0.1:8888.
+
+### Notes
+- California (no shift, seed 0) reproduces earlier results exactly (coverage 0.9032).
+- Under shift, overall coverage drops for both methods: Texas 0.884, New York 0.884,
+  Florida 0.869 (split 0.8836 / 0.8841 / 0.8690). Prediction sets barely grow
+  (1.18 -> 1.20-1.21), so the system is less right without looking less sure.
+- Mondrian does not repair shift, and can transfer worse for a group whose members differ
+  between states: American Indian in Florida 0.828 (Mondrian) vs 0.854 (split), because
+  California's per-group threshold for that group was stricter than the shared one.
+- Shift results use one seed (by design); overall drops are far beyond split-to-split
+  noise, but small-group numbers are not.
+
 ## [0.3.0] - 2026-09-21
 
 ### Added
