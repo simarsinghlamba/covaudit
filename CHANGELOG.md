@@ -5,6 +5,10 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Notebook service: JupyterLab now starts in the container (it refuses to run as
+  root without `--allow-root`); token option renamed to `IdentityProvider.token`.
+
 ## [0.4.0] - 2026-09-21
 
 ### Added
