@@ -1,0 +1,7 @@
+.git
+data/
+outputs/
+.venv/
+**/__pycache__/
+**/.ipynb_checkpoints/
+*.zip
