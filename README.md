@@ -63,6 +63,29 @@ The command prints the row count, the share of people earning over $50,000, and 
 checksum of the downloaded file, so you can confirm you have exactly the same data.
 The first build takes a few minutes; later builds reuse cached layers.
 
+## Reproduce everything
+
+With Docker Desktop running, from the repository folder:
+
+```bash
+docker compose up --build                       # audit (20 seeds), then report
+docker compose --profile test run --rm tests    # run the test suite in the container
+docker compose down                             # remove stopped containers
+```
+
+- `audit` runs `covaudit run --config configs/repair.yaml`: split vs Mondrian conformal
+  prediction over 20 seeds on ACSIncome California 2018, grouped by race (RAC1P).
+- `report` starts only after `audit` finishes successfully and writes figures and
+  `report.md`.
+- Everything appears on your computer in `outputs/` (not tracked by Git):
+  `outputs/repair/` (CSV + `run_info.json`) and `outputs/report/` (figures + report).
+- The first run builds the image and downloads the Census file (about 270 MB) into
+  `data/`; later runs reuse both. The 20-seed experiment takes a few minutes on a
+  laptop CPU (about 2 minutes in Google Colab).
+- The committed evidence is in `results/`. `outputs/repair/summary.csv` should match
+  `results/repair/summary.csv`; tiny differences in the last decimals can appear if a
+  different library version is installed (exact versions are recorded in `run_info.json`).
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
