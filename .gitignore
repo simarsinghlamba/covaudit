@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- covaudit additions ---
+data/
+outputs/
+.ipynb_checkpoints/
+*.zip
