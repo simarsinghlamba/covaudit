@@ -14,4 +14,9 @@ RUN pip install --no-cache-dir -r requirements.lock
 COPY . .
 RUN pip install --no-cache-dir --no-deps .
 
+# 3. Run as a normal user instead of root (security good practice).
+RUN useradd --create-home appuser && mkdir -p /app/data /app/outputs \
+    && chown -R appuser /app
+USER appuser
+
 CMD ["covaudit", "--help"]
