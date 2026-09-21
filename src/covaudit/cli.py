@@ -79,6 +79,22 @@ def cmd_audit(args):
     return 0
 
 
+def cmd_report(args):
+    """Draw figures and write report.md from whatever result CSVs exist."""
+    from covaudit.report import write_report
+
+    if not Path(args.results).is_dir():
+        print(f"error: results folder '{args.results}' does not exist")
+        return 1
+    path, notes = write_report(args.results, args.out, alpha=args.alpha)
+    for note in notes:
+        print(f"note: {note}")
+    for png in sorted(Path(args.out).glob("*.png")):
+        print(f"figure {png}")
+    print(f"wrote {path}")
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="covaudit", description=__doc__)
     parser.add_argument("--version", action="version",
@@ -99,11 +115,18 @@ def main(argv=None):
     p_audit.add_argument("--group", default="RAC1P")
     p_audit.add_argument("--out", default="outputs/audit")
 
+    p_report = sub.add_parser("report", help="draw figures and write report.md")
+    p_report.add_argument("--results", default="outputs")
+    p_report.add_argument("--out", default="outputs/report")
+    p_report.add_argument("--alpha", type=float, default=0.1)
+
     args = parser.parse_args(argv)
     if args.command == "data":
         return cmd_data(args)
     if args.command == "audit":
         return cmd_audit(args)
+    if args.command == "report":
+        return cmd_report(args)
     parser.print_help()
     return 0
 
