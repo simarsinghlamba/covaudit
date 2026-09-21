@@ -6,6 +6,8 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Demo notebook runs in both Colab and the Docker notebook service: installs
+  covaudit only if missing, reuses the repository's data folder, writes figures to /tmp.
 - Notebook service: JupyterLab now starts in the container (it refuses to run as
   root without `--allow-root`); token option renamed to `IdentityProvider.token`.
 
