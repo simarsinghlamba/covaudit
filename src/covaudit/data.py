@@ -1,4 +1,7 @@
 """Download ACSIncome data and split it into train / calibration / test."""
+import hashlib
+from pathlib import Path
+
 import numpy as np
 
 RACE_NAMES = {
@@ -33,3 +36,12 @@ def split_indices(n, seed=0, fractions=(0.6, 0.2, 0.2)):
     return {"train": idx[:n_train],
             "cal": idx[n_train:n_train + n_cal],
             "test": idx[n_train + n_cal:]}
+
+
+def file_checksum(path):
+    """SHA-256 fingerprint of a file, to detect silent data changes."""
+    h = hashlib.sha256()
+    with open(Path(path), "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
