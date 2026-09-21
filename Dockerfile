@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copy the project into the image and install it with test tools.
 COPY . .
-RUN pip install --no-cache-dir ".[dev]"
+RUN pip install --no-cache-dir ".[dev,notebook]"
 
 # What runs if no command is given.
 CMD ["covaudit", "--help"]
