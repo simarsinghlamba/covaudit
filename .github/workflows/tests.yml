@@ -18,3 +18,12 @@ jobs:
         run: ruff check .
       - name: Run tests
         run: pytest -q
+
+  docker-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t covaudit:ci .
+      - name: Run tests inside the container
+        run: docker run --rm covaudit:ci pytest -q
