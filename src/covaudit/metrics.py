@@ -11,19 +11,44 @@ def is_covered(y, sets, classes):
 
 
 def coverage(y, sets, classes):
-    """Fraction of people whose prediction set contains their true label."""
+    """Fraction of people whose prediction set contains their true label.
+
+    Args:
+        y: true labels.
+        sets: boolean prediction sets, shape (n_people, n_classes).
+        classes: class labels in column order (``model.classes_``).
+
+    Returns:
+        Coverage as a float between 0 and 1.
+    """
     return float(np.mean(is_covered(y, sets, classes)))
 
 
 def average_set_size(sets):
-    """Average number of labels per prediction set."""
+    """Average number of labels per prediction set (smaller is more useful).
+
+    Args:
+        sets: boolean prediction sets, shape (n_people, n_classes).
+
+    Returns:
+        Mean set size as a float; between 0 and 2 for yes/no problems.
+    """
     return float(np.mean(sets.sum(axis=1)))
 
 
 def clopper_pearson(k, n, confidence=0.95):
-    """Exact confidence interval for k successes out of n.
+    """Exact (Clopper-Pearson) confidence interval for k successes out of n.
 
-    Returns (low, high). An empty group (n = 0) gives (0.0, 1.0): nothing is known.
+    Guaranteed to reach at least the stated confidence for every true value, so it
+    is conservative for small groups.
+
+    Args:
+        k: number of successes (people covered).
+        n: number of trials (people in the group).
+        confidence: confidence level, default 0.95.
+
+    Returns:
+        (low, high). An empty group (n = 0) gives (0.0, 1.0): nothing is known.
     """
     if n == 0:
         return (0.0, 1.0)
@@ -45,8 +70,22 @@ def coverage_status(cov, ci_high, alpha):
 
 
 def group_coverage_table(y, sets, groups, classes, alpha=0.1, confidence=0.95):
-    """One row per group plus an 'ALL' row: n, covered, coverage, interval,
-    average set size and FAIL/LOW/OK status.
+    """The per-group audit: one row per group plus an 'ALL' row.
+
+    Status rule: FAIL if the whole interval is below 1 - alpha; LOW if coverage
+    is below 1 - alpha but the interval reaches it; otherwise OK.
+
+    Args:
+        y: true labels.
+        sets: boolean prediction sets, shape (n_people, n_classes).
+        groups: group of each person.
+        classes: class labels in column order (``model.classes_``).
+        alpha: miscoverage level, default 0.1.
+        confidence: interval confidence level, default 0.95.
+
+    Returns:
+        DataFrame with columns group, n, covered, coverage, ci_low, ci_high,
+        avg_set_size, status.
     """
     covered = is_covered(y, sets, classes)
     sizes = sets.sum(axis=1)

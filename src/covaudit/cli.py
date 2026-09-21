@@ -141,6 +141,7 @@ def cmd_report(args):
 
 
 def main(argv=None):
+    """Entry point of the covaudit command; argv defaults to the real command line."""
     parser = argparse.ArgumentParser(prog="covaudit", description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"covaudit {__version__}")
