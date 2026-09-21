@@ -5,7 +5,17 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-21
+
 ### Added
+- GitHub Actions CI: ruff + pytest on Python 3.12, and a Docker job that builds the
+  image and runs the tests inside it; status badge in README.
+- `plot_group_coverage`: per-group coverage with intervals, dashed 1 - alpha line,
+  FAIL/LOW/OK colours and legend; tiny groups' intervals clipped and marked.
+- `covaudit report`: finds result CSVs, draws figures, writes report.md; missing
+  parts are skipped with a note.
+- Tests that figures are written without a display and that the report tolerates
+  missing results.
 - Clopper-Pearson exact confidence interval for coverage (via SciPy).
 - FAIL / LOW / OK status rule: FAIL only when the whole interval is below 1 - alpha.
 - Per-group coverage table (ALL row + one row per group) with interval, set size and status.
