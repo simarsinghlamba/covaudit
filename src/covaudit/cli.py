@@ -107,6 +107,23 @@ def cmd_run(args):
     return 0
 
 
+def cmd_shift(args):
+    """Calibrate on the source state and measure coverage in other states."""
+    from covaudit.config import load_config
+    from covaudit.experiment import run_shift_experiment, summarise_shift
+
+    cfg = load_config(args.config)
+    if args.root:
+        cfg["root"] = args.root
+    print(f"shift experiment: calibrate on {cfg['source']['state']} -> "
+          f"{cfg['targets']} | group {cfg['group_column']} | alpha {cfg['alpha']}")
+    shift, info = run_shift_experiment(cfg, args.out)
+    print(summarise_shift(shift, float(cfg["alpha"])).round(4).to_string(index=False))
+    print(f"runtime {info['runtime_seconds']} s | wrote {args.out}/shift_coverage.csv, "
+          f"run_info.json")
+    return 0
+
+
 def cmd_report(args):
     """Draw figures and write report.md from whatever result CSVs exist."""
     from covaudit.report import write_report
@@ -149,6 +166,11 @@ def main(argv=None):
     p_run.add_argument("--out", default="outputs/repair")
     p_run.add_argument("--root", default=None, help="override the data folder")
 
+    p_shift = sub.add_parser("shift", help="calibrate on one state, test on others")
+    p_shift.add_argument("--config", default="configs/shift.yaml")
+    p_shift.add_argument("--out", default="outputs/shift")
+    p_shift.add_argument("--root", default=None, help="override the data folder")
+
     p_report = sub.add_parser("report", help="draw figures and write report.md")
     p_report.add_argument("--results", default="outputs")
     p_report.add_argument("--out", default="outputs/report")
@@ -161,6 +183,8 @@ def main(argv=None):
         return cmd_audit(args)
     if args.command == "run":
         return cmd_run(args)
+    if args.command == "shift":
+        return cmd_shift(args)
     if args.command == "report":
         return cmd_report(args)
     parser.print_help()

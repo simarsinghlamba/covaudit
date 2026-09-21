@@ -124,3 +124,72 @@ def run_repair_experiment(cfg, out_dir):
     info = _run_info(cfg, len(X), d["root"], d["year"], time.time() - start)
     (out / "run_info.json").write_text(json.dumps(info, indent=2, default=str))
     return groups, summary, info
+
+
+def summarise_shift(shift, alpha):
+    """One row per target x method: overall coverage, set size, worst-group gap, FAIL count."""
+    rows = []
+    for (target, method), t in shift.groupby(["target", "method"], sort=False):
+        everyone = t[t["group"] == "ALL"].iloc[0]
+        rows.append({
+            "target": target, "shifted": bool(everyone["shifted"]), "method": method,
+            "n": int(everyone["n"]), "coverage": everyone["coverage"],
+            "avg_set_size": everyone["avg_set_size"],
+            "worst_group_gap": worst_group_gap(t, alpha),
+            "fail_groups": int(((t["group"] != "ALL") & (t["status"] == "FAIL")).sum()),
+        })
+    return pd.DataFrame(rows)
+
+
+def run_shift_experiment(cfg, out_dir):
+    """Calibrate on the source state, then use the SAME thresholds on other states.
+    Writes shift_coverage.csv and run_info.json; returns (shift, info)."""
+    start = time.time()
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    src, root = cfg["source"], cfg["root"]
+    year = src["year"]
+    column, alpha = cfg["group_column"], float(cfg["alpha"])
+    confidence = float(cfg.get("confidence", 0.95))
+    seed = int(cfg.get("seed", 0))
+
+    X, y = load_acs_income(src["state"], year, root)
+    s = split_indices(len(X), seed=seed)
+    model = train_model(X.iloc[s["train"]], y.iloc[s["train"]], seed=seed)
+    cal = s["cal"]
+    calibrated = {}
+    for method in cfg["methods"]:
+        if method == "mondrian":
+            calibrated[method] = MondrianConformal(model, alpha).calibrate(
+                X.iloc[cal], y.iloc[cal], X[column].iloc[cal])
+        else:
+            calibrated[method] = SplitConformal(model, alpha).calibrate(X.iloc[cal], y.iloc[cal])
+
+    frames = []
+
+    def audit(target, shifted, X_t, y_t):
+        g_t = X_t[column]
+        for method, cp in calibrated.items():
+            sets = cp.predict_sets(X_t, g_t) if method == "mondrian" else cp.predict_sets(X_t)
+            t = group_coverage_table(y_t, sets, g_t, model.classes_, alpha=alpha,
+                                     confidence=confidence)
+            t = _add_names(t, column)
+            t.insert(0, "method", method)
+            t.insert(0, "shifted", shifted)
+            t.insert(0, "target", target)
+            frames.append(t)
+
+    rows = {src["state"]: len(X)}
+    audit(src["state"], False, X.iloc[s["test"]], y.iloc[s["test"]])
+    del X, y
+    for state in cfg["targets"]:
+        X_t, y_t = load_acs_income(state, year, root)
+        rows[state] = len(X_t)
+        audit(state, True, X_t, y_t)
+        del X_t, y_t
+
+    shift = pd.concat(frames, ignore_index=True)
+    shift.to_csv(out / "shift_coverage.csv", index=False)
+    info = _run_info(cfg, rows, root, year, time.time() - start)
+    (out / "run_info.json").write_text(json.dumps(info, indent=2, default=str))
+    return shift, info
