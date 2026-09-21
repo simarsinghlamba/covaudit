@@ -1,4 +1,5 @@
 """Download ACSIncome data and split it into train / calibration / test."""
+import numpy as np
 
 RACE_NAMES = {
     1: "White", 2: "Black", 3: "American Indian", 4: "Alaska Native",
@@ -19,3 +20,16 @@ def load_acs_income(state="CA", year="2018", root="data"):
     X = X.reset_index(drop=True)
     y = y.iloc[:, 0].astype(int).reset_index(drop=True)
     return X, y
+
+
+def split_indices(n, seed=0, fractions=(0.6, 0.2, 0.2)):
+    """Shuffle row numbers 0..n-1 and cut them into train / cal / test."""
+    if abs(sum(fractions) - 1.0) > 1e-9:
+        raise ValueError("fractions must add up to 1")
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(n)
+    n_train = int(fractions[0] * n)
+    n_cal = int(fractions[1] * n)
+    return {"train": idx[:n_train],
+            "cal": idx[n_train:n_train + n_cal],
+            "test": idx[n_train + n_cal:]}
