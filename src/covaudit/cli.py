@@ -90,6 +90,23 @@ def cmd_audit(args):
     return 0
 
 
+def cmd_run(args):
+    """Run the multi-seed repair experiment from a YAML config."""
+    from covaudit.config import load_config
+    from covaudit.experiment import run_repair_experiment
+
+    cfg = load_config(args.config)
+    if args.root:
+        cfg["dataset"]["root"] = args.root
+    print(f"repair experiment: {len(cfg['seeds'])} seeds x {cfg['methods']} "
+          f"| group {cfg['group_column']} | alpha {cfg['alpha']}")
+    groups, summary, info = run_repair_experiment(cfg, args.out)
+    print(summary.round(4).to_string(index=False))
+    print(f"runtime {info['runtime_seconds']} s | wrote {args.out}/group_coverage.csv, "
+          f"summary.csv, run_info.json")
+    return 0
+
+
 def cmd_report(args):
     """Draw figures and write report.md from whatever result CSVs exist."""
     from covaudit.report import write_report
@@ -127,6 +144,11 @@ def main(argv=None):
     p_audit.add_argument("--method", choices=["split", "mondrian"], default="split")
     p_audit.add_argument("--out", default="outputs/audit")
 
+    p_run = sub.add_parser("run", help="multi-seed split vs Mondrian experiment")
+    p_run.add_argument("--config", default="configs/repair.yaml")
+    p_run.add_argument("--out", default="outputs/repair")
+    p_run.add_argument("--root", default=None, help="override the data folder")
+
     p_report = sub.add_parser("report", help="draw figures and write report.md")
     p_report.add_argument("--results", default="outputs")
     p_report.add_argument("--out", default="outputs/report")
@@ -137,6 +159,8 @@ def main(argv=None):
         return cmd_data(args)
     if args.command == "audit":
         return cmd_audit(args)
+    if args.command == "run":
+        return cmd_run(args)
     if args.command == "report":
         return cmd_report(args)
     parser.print_help()

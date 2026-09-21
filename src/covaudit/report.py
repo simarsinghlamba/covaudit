@@ -98,6 +98,24 @@ def write_report(results_dir, out_dir, alpha=0.1):
                   f"![{title}]({png.name})", "", _md_table(table), "",
                   f"Worst-group gap: {worst_group_gap(table, alpha):.4f}", ""]
 
+    repairs = sorted(p for p in results_dir.rglob("group_coverage.csv")
+                     if out_dir not in p.parents)
+    if repairs:
+        lines += ["## Repair experiment: split vs Mondrian over seeds", ""]
+    for csv in repairs:
+        folder = csv.parent.name if csv.parent != results_dir else "repair"
+        f1 = plot_repair_summary(csv, alpha, out_dir / f"{folder}_coverage.png",
+                                 title=f"Mean coverage per group over seeds ({folder})")
+        f2 = plot_set_size(csv, out_dir / f"{folder}_set_size.png",
+                           title=f"Prediction-set size per group ({folder})")
+        lines += [f"### `{csv.relative_to(results_dir)}`", "",
+                  f"![coverage]({f1.name})", "", f"![set size]({f2.name})", ""]
+        summary = csv.parent / "summary.csv"
+        if summary.exists():
+            lines += ["Summary over seeds:", "", _md_any(pd.read_csv(summary)), ""]
+        lines += ["Per-group means over seeds:", "",
+                  _md_any(_repair_wide(pd.read_csv(csv))), ""]
+
     for fname, label in [("group_coverage.csv", "repair experiment"),
                          ("shift_coverage.csv", "shift experiment")]:
         if not any(results_dir.rglob(fname)):
@@ -106,3 +124,106 @@ def write_report(results_dir, out_dir, alpha=0.1):
     path = out_dir / "report.md"
     path.write_text("\n".join(lines) + "\n")
     return path, notes
+
+
+def _repair_means(g):
+    """Per method and group: mean n, mean/std coverage and mean set size over seeds."""
+    return (g.groupby(["method", "group", "name"], sort=False)
+             .agg(n=("n", "mean"), cov_mean=("coverage", "mean"),
+                  cov_std=("coverage", "std"), size_mean=("avg_set_size", "mean"))
+             .reset_index())
+
+
+def plot_repair_summary(group_csv, alpha, path, title=None):
+    """One panel per method: mean coverage per group over seeds, bar = +/- 1 sd."""
+    m = _repair_means(pd.read_csv(group_csv))
+    methods = list(dict.fromkeys(m["method"]))
+    target = 1 - alpha
+    first = m[m["method"] == methods[0]].reset_index(drop=True)
+    big = m[m["n"] >= 30]
+    left = (big["cov_mean"] - big["cov_std"].fillna(0)).min() - 0.02
+    left = max(0.0, min(left, target - 0.05))
+
+    fig, axes = plt.subplots(1, len(methods), sharey=True, squeeze=False,
+                             figsize=(4.5 * len(methods) + 2.5, 0.45 * len(first) + 1.6))
+    for ax, method in zip(axes[0], methods):
+        rows = m[m["method"] == method].reset_index(drop=True)
+        for i, r in rows.iterrows():
+            y = len(rows) - 1 - i
+            sd = 0.0 if pd.isna(r["cov_std"]) else r["cov_std"]
+            color = (COLORS["ALL"] if r["group"] == "ALL"
+                     else COLORS["OK"] if r["cov_mean"] >= target else COLORS["LOW"])
+            ax.plot([max(r["cov_mean"] - sd, left), min(r["cov_mean"] + sd, 1.0)],
+                    [y, y], color=color, lw=2)
+            ax.plot(max(r["cov_mean"], left), y, "o", color=color, ms=6)
+            if r["cov_mean"] - sd < left:
+                ax.plot(left, y, "<", color=color, ms=6)
+        ax.axvline(target, ls="--", color="black", lw=1)
+        ax.set_xlim(left, 1.005)
+        ax.set_title(method)
+        ax.set_xlabel("mean coverage over seeds (bar = +/- 1 sd)")
+    axes[0][0].set_yticks(range(len(first)))
+    axes[0][0].set_yticklabels([f"{r['name']} (n~{int(round(r['n']))})"
+                                for _, r in first.iloc[::-1].iterrows()])
+    handles = [Line2D([0], [0], color=COLORS["OK"], marker="o", lw=2, label="mean >= target"),
+               Line2D([0], [0], color=COLORS["LOW"], marker="o", lw=2, label="mean < target")]
+    axes[0][-1].legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1),
+                       frameon=False, fontsize=9)
+    fig.suptitle(title or "Mean coverage per group over seeds")
+    fig.tight_layout()
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return path
+
+
+def plot_set_size(group_csv, path, title=None):
+    """Mean average set size per group, one bar per method (the cost of repair)."""
+    m = _repair_means(pd.read_csv(group_csv))
+    methods = list(dict.fromkeys(m["method"]))
+    first = m[m["method"] == methods[0]].reset_index(drop=True)
+    palette = ["#8a8f98", "#2a7f8e", "#1f3a5f", "#b03a3a"]
+    height = 0.8 / len(methods)
+    fig, ax = plt.subplots(figsize=(7.5, 0.5 * len(first) + 1.6))
+    for j, method in enumerate(methods):
+        rows = m[m["method"] == method].reset_index(drop=True)
+        ys = [len(rows) - 1 - i + ((len(methods) - 1) / 2 - j) * height
+              for i in range(len(rows))]
+        ax.barh(ys, rows["size_mean"], height=height, color=palette[j % 4], label=method)
+    ax.set_yticks(range(len(first)))
+    ax.set_yticklabels([f"{r['name']} (n~{int(round(r['n']))})"
+                        for _, r in first.iloc[::-1].iterrows()])
+    ax.axvline(1.0, color="black", lw=0.8, ls=":")
+    ax.set_xlim(0.9, min(2.05, m["size_mean"].max() + 0.1))
+    ax.set_xlabel("mean average set size (1 = one label, 2 = both labels)")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False, fontsize=9)
+    ax.set_title(title or "Cost of repair: prediction-set size per group")
+    fig.tight_layout()
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return path
+
+
+def _md_any(df):
+    """Markdown table of every column; floats to 4 decimals."""
+    lines = ["| " + " | ".join(map(str, df.columns)) + " |", "|" + "---|" * len(df.columns)]
+    for _, r in df.iterrows():
+        lines.append("| " + " | ".join(f"{v:.4f}" if isinstance(v, float) else str(v)
+                                       for v in r) + " |")
+    return "\n".join(lines)
+
+
+def _repair_wide(g):
+    """One row per group: mean n, then mean coverage and set size per method."""
+    m = _repair_means(g)
+    methods = list(dict.fromkeys(m["method"]))
+    wide = m[m["method"] == methods[0]][["group", "name", "n"]].reset_index(drop=True)
+    wide["n"] = wide["n"].round().astype(int)
+    for method in methods:
+        sub = m[m["method"] == method].reset_index(drop=True)
+        wide[f"coverage {method}"] = sub["cov_mean"]
+        wide[f"set size {method}"] = sub["size_mean"]
+    return wide
