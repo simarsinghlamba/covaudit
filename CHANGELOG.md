@@ -5,6 +5,8 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-21
+
 ### Added
 - Installable package with `covaudit` command (`--version`, `data`, `audit`).
 - Download of ACSIncome (California 2018) via folktables with local cache and SHA-256 checksum.
