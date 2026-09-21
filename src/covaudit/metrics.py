@@ -1,5 +1,6 @@
 """Coverage, set size, confidence intervals and the per-group audit table."""
 import numpy as np
+from scipy.stats import binomtest
 
 
 def is_covered(y, sets, classes):
@@ -16,3 +17,15 @@ def coverage(y, sets, classes):
 def average_set_size(sets):
     """Average number of labels per prediction set."""
     return float(np.mean(sets.sum(axis=1)))
+
+
+def clopper_pearson(k, n, confidence=0.95):
+    """Exact confidence interval for k successes out of n.
+
+    Returns (low, high). An empty group (n = 0) gives (0.0, 1.0): nothing is known.
+    """
+    if n == 0:
+        return (0.0, 1.0)
+    ci = binomtest(int(k), int(n)).proportion_ci(confidence_level=confidence,
+                                                 method="exact")
+    return (float(ci.low), float(ci.high))
