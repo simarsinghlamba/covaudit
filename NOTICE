@@ -1,0 +1,12 @@
+covaudit
+Copyright 2026 Simar Singh Lamba
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Data
+- American Community Survey (ACS) Public Use Microdata Sample, U.S. Census Bureau.
+  Used under the Census Bureau's terms of use; no attempt is made to identify individuals.
+  The data are downloaded at run time and are not redistributed in this repository.
+- Accessed through folktables (MIT License):
+  Ding, Hardt, Miller, Schmidt (2021). Retiring Adult: New Datasets for Fair Machine Learning.
+  NeurIPS. https://github.com/socialfoundations/folktables
