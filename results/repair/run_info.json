@@ -1,5 +1,5 @@
 {
-  "covaudit_version": "0.2.0",
+  "covaudit_version": "0.4.0",
   "config": {
     "dataset": {
       "state": "CA",
@@ -43,17 +43,20 @@
   },
   "data_rows": 195665,
   "data_sha256": {
-    "psam_p06.csv": "dc2187fc90df2c5f6b546ee89a2b41c9a97379c9e7136461b6a6c8de871b43e0"
+    "psam_p06.csv": "dc2187fc90df2c5f6b546ee89a2b41c9a97379c9e7136461b6a6c8de871b43e0",
+    "psam_p12.csv": "850e370344877e1bfa3e646390f645788db68c8c9bcf36b710bc84ebdc991c37",
+    "psam_p36.csv": "f9bfd886b96182c4e7bde11386dd5e1c7ea2d6194ef8bb4ee6bfbb0023814a91",
+    "psam_p48.csv": "32c73b8098aa793b6766d99455b4ce15d282a2542810e1d2842753aea64f23d3"
   },
-  "runtime_seconds": 110.1,
-  "python": "3.13.15",
+  "runtime_seconds": 67.7,
+  "python": "3.12.3",
   "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
   "libraries": {
-    "numpy": "2.1.3",
-    "pandas": "2.2.3",
-    "scipy": "1.16.3",
-    "scikit-learn": "1.6.1",
-    "matplotlib": "3.10.0",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
     "pyyaml": "6.0.3",
     "folktables": "0.0.12"
   }

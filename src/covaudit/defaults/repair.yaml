@@ -1,0 +1,11 @@
+# configs/repair.yaml -- every experiment setting lives here, not in code
+dataset:
+  state: CA
+  year: "2018"
+  root: data
+group_column: RAC1P  # try SEX too, and report both
+alpha: 0.1
+confidence: 0.95
+split_fractions: [0.6, 0.2, 0.2]
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+methods: [split, mondrian]

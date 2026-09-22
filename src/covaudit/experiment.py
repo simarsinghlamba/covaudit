@@ -168,6 +168,7 @@ def run_shift_experiment(cfg, out_dir):
     frames = []
 
     def audit(target, shifted, X_t, y_t):
+        """Append the group tables of one state under every calibrated method."""
         g_t = X_t[column]
         for method, cp in calibrated.items():
             sets = cp.predict_sets(X_t, g_t) if method == "mondrian" else cp.predict_sets(X_t)

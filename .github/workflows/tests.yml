@@ -6,23 +6,23 @@ on:
 
 jobs:
   python-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Install package with test tools
-        run: pip install -e ".[dev]"
+      - name: Install pinned versions and the package
+        run: pip install -r requirements.lock && pip install --no-deps -e .
       - name: Check code style
         run: ruff check .
       - name: Run tests
         run: pytest -q
 
   docker-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build Docker image
         run: docker build -t covaudit:ci .
       - name: Run tests inside the container

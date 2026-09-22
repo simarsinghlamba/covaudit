@@ -92,10 +92,10 @@ def cmd_audit(args):
 
 def cmd_run(args):
     """Run the multi-seed repair experiment from a YAML config."""
-    from covaudit.config import load_config
+    from covaudit.config import load_config, load_default_config
     from covaudit.experiment import run_repair_experiment
 
-    cfg = load_config(args.config)
+    cfg = load_config(args.config) if args.config else load_default_config("repair")
     if args.root:
         cfg["dataset"]["root"] = args.root
     print(f"repair experiment: {len(cfg['seeds'])} seeds x {cfg['methods']} "
@@ -109,10 +109,10 @@ def cmd_run(args):
 
 def cmd_shift(args):
     """Calibrate on the source state and measure coverage in other states."""
-    from covaudit.config import load_config
+    from covaudit.config import load_config, load_default_config
     from covaudit.experiment import run_shift_experiment, summarise_shift
 
-    cfg = load_config(args.config)
+    cfg = load_config(args.config) if args.config else load_default_config("shift")
     if args.root:
         cfg["root"] = args.root
     print(f"shift experiment: calibrate on {cfg['source']['state']} -> "
@@ -141,6 +141,7 @@ def cmd_report(args):
 
 
 def main(argv=None):
+    """Entry point of the covaudit command; argv defaults to the real command line."""
     parser = argparse.ArgumentParser(prog="covaudit", description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"covaudit {__version__}")
@@ -162,12 +163,14 @@ def main(argv=None):
     p_audit.add_argument("--out", default="outputs/audit")
 
     p_run = sub.add_parser("run", help="multi-seed split vs Mondrian experiment")
-    p_run.add_argument("--config", default="configs/repair.yaml")
+    p_run.add_argument("--config", default=None,
+                       help="YAML settings (default: built-in, same as configs/repair.yaml)")
     p_run.add_argument("--out", default="outputs/repair")
     p_run.add_argument("--root", default=None, help="override the data folder")
 
     p_shift = sub.add_parser("shift", help="calibrate on one state, test on others")
-    p_shift.add_argument("--config", default="configs/shift.yaml")
+    p_shift.add_argument("--config", default=None,
+                         help="YAML settings (default: built-in, same as configs/shift.yaml)")
     p_shift.add_argument("--out", default="outputs/shift")
     p_shift.add_argument("--root", default=None, help="override the data folder")
 
