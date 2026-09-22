@@ -1,6 +1,6 @@
 """covaudit: audit and repair subgroup coverage of conformal prediction."""
 
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 
 from covaudit.conformal import MondrianConformal, SplitConformal  # noqa: E402
 from covaudit.metrics import (  # noqa: E402

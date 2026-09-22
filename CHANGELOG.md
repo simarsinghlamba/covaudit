@@ -5,11 +5,45 @@ The format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-22
+
+First stable release.
+
+### Added
+- `requirements.lock`: exact versions of all 112 dependencies, generated inside the container.
+- Reproducibility tests: same seed gives identical tables, a different seed gives different
+  ones, and the base model is seeded (early stopping is random unless seeded).
+- Public API: `from covaudit import SplitConformal, MondrianConformal, group_coverage_table,
+  coverage, average_set_size, clopper_pearson`.
+- Default configs shipped inside the package: `covaudit run` and `covaudit shift` work after
+  `pip install` without a config file; a test keeps them identical to `configs/`.
+- Docstrings for the public API; `docs/metrics.md` (the statistics) and
+  `docs/architecture.md` (structure, containers, reproducibility).
+- Complete README with results, and NOTICE with data attribution.
+
+### Changed
+- Docker installs the pinned lock file first (cached layer), then covaudit with `--no-deps`,
+  and runs as a non-root user (`appuser`); `--allow-root` removed from the notebook service.
+- CI installs the pinned versions, uses `actions/checkout@v5` and `actions/setup-python@v6`,
+  and runs on `ubuntu-24.04` instead of the moving `ubuntu-latest`.
+- `results/` regenerated with the pinned versions (Python 3.12, scikit-learn 1.9.1); some
+  per-seed numbers changed in the last decimals (e.g. SEX: split FAIL on 12 of 20 seeds,
+  Mondrian on 4). Conclusions are unchanged.
+- The demo notebook installs `@v1.0.0` and uses the public-API imports.
+- The demo notebook counts as documentation in GitHub's language statistics.
+
 ### Fixed
 - Demo notebook runs in both Colab and the Docker notebook service: installs
   covaudit only if missing, reuses the repository's data folder, writes figures to /tmp.
 - Notebook service: JupyterLab now starts in the container (it refuses to run as
   root without `--allow-root`); token option renamed to `IdentityProvider.token`.
+
+### Notes
+- `docker compose up --build` reproduces `results/repair/summary.csv`,
+  `results/repair/group_coverage.csv` and `results/shift/shift_coverage.csv` byte for byte.
+- Rollback check: v0.2.0 still builds and passes its own 14 tests.
+- Headline (race, 20 seeds): split Black 0.892 (FAIL 5/20), Asian 0.897 (FAIL 4/20);
+  Mondrian brings every sizeable group to 0.900-0.908; overall set size 1.1795 -> 1.1803.
 
 ## [0.4.0] - 2026-09-21
 
